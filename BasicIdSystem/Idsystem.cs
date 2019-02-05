@@ -29,6 +29,11 @@ namespace BasicIdSystem
         {
         }
 
+        public HashSet<string> ListTags()
+        {
+            return new HashSet<string>(tags.Keys);
+        }
+
         public string Register(T entity)
         {
             string id = GenerateId(entity);

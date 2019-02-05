@@ -47,6 +47,25 @@ namespace Tests
         }
 
         [TestMethod]
+        public void TestListTag()
+        {
+            //Has a user I want to list all tags
+            var idSystem = new IdSystem<string>();
+            string idA = idSystem.Register("a");
+            string idB = idSystem.Register("b");
+            idSystem.Register("c");
+            idSystem.Register("d");
+
+            idSystem.Tag("tag1", idA);
+            AssertContainsAll(idSystem.ListTags(), "tag1");
+            idSystem.Tag("tag2", idA);
+            AssertContainsAll(idSystem.ListTags(), "tag1", "tag2");
+            idSystem.Tag("tag3", idB);
+            idSystem.Untag("a");
+            AssertContainsAll(idSystem.ListTags(), "tag3");
+        }
+
+        [TestMethod]
         public void TestAddRemoveTag()
         {
             var idSystem = new IdSystem<string>();
@@ -66,9 +85,18 @@ namespace Tests
 
             var values = idSystem.Find(tag);
             Assert.AreEqual(0, values.Count);
+
+            idSystem.Tag(tag, id);
+            Assert.IsTrue(idSystem.IsRegisteredTag(tag));
+            Assert.AreEqual(testValue, idSystem[tag]);
+            Assert.AreEqual(idSystem[id], idSystem[tag]);
+
+            idSystem.RemoveTag(tag);
+            values = idSystem.Find(tag);
+            Assert.AreEqual(0, values.Count);
         }
 
-            private IdSystem<string> GetTestSimple()
+        private IdSystem<string> GetTestSimple()
         {
             var idSystem = new IdSystem<string>(new TestIdGenerator("aaaaa", "aaaab", "aaaac", "aabbb"));
 
