@@ -13,6 +13,8 @@ namespace BasicIdSystem
 
         private Dictionary<string, Tag> tags = new Dictionary<string, Tag>();
 
+        private Dictionary<string, HashSet<string>> idToTags = new Dictionary<string, HashSet<string>>();
+
         private IGenerateId<T> idGenerator;
 
         public int Count
@@ -32,6 +34,16 @@ namespace BasicIdSystem
         public HashSet<string> ListTags()
         {
             return new HashSet<string>(tags.Keys);
+        }
+
+        public HashSet<string> ListTagsFor(string id)
+        {
+            if (!idToTags.ContainsKey(id))
+            {
+                return new HashSet<string>();
+            }
+
+            return idToTags[id];
         }
 
         public string Register(T entity)
@@ -72,17 +84,38 @@ namespace BasicIdSystem
 
             Tag newTag = new Tag(tag, id);
             tags.Add(tag, newTag);
+
+            if (!idToTags.ContainsKey(id))
+            {
+                idToTags[id] = new HashSet<string>();
+            }
+
+            idToTags[id].Add(tag);
         }
 
         public void RemoveTag(string tag)
         {
+            if (!tags.ContainsKey(tag))
+            {
+                return;
+            }
+
+            Tag actualTag = tags[tag];
+            idToTags[actualTag.ReferencedId].Remove(tag);
             tags.Remove(tag);
         }
 
         public void Untag(T entity)
         {
             string id = objectToId[entity];
-            var tagNames = tags.Values.Where(x => x.ReferencedId == id).Select(x => x.Name).ToList();
+            if (!idToTags.ContainsKey(id))
+            {
+                return;
+            }
+
+            var tagNames = idToTags[id];
+            tagNames = new HashSet<string>(tagNames);
+            
             foreach(var tagName in tagNames)
             {
                 RemoveTag(tagName);
@@ -97,6 +130,11 @@ namespace BasicIdSystem
         public bool IsRegistered(T entity)
         {
             return objectToId.ContainsKey(entity);
+        }
+
+        public bool IsRegisteredIdoOrTag(string idOrTag)
+        {
+            return IsRegisteredId(idOrTag) || IsRegisteredTag(idOrTag);
         }
 
         public bool IsRegisteredTag(string tag)
